@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Cricbuzz PK</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',sans-serif;background:#f0f2f5;min-height:100vh;overflow-x:hidden}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* SPLASH */
+#splash{background:linear-gradient(160deg,#014d1e 0%,#010e03 100%);align-items:center;justify-content:center;gap:20px}
+.splash-ball{animation:spinIn 1.8s cubic-bezier(.23,1,.32,1) forwards}
+.splash-name{animation:fadeUp .8s 1s ease both;opacity:0}
+.splash-sub{animation:fadeUp .8s 1.3s ease both;opacity:0}
+.splash-loader{animation:fadeUp .8s 1.6s ease both;opacity:0}
+@keyframes spinIn{0%{transform:rotate(-180deg) scale(.3);opacity:0}70%{transform:rotate(15deg) scale(1.08)}100%{transform:rotate(0) scale(1);opacity:1}}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes slideOut{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+
+/* HEADER */
+.app-header{background:linear-gradient(135deg,#014d1e,#027a32);padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.app-header h1{font-family:'Bebas Neue',serif;font-size:22px;letter-spacing:3px;color:#fff;flex:1}
+.back-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.header-logo{width:34px;height:34px}
+
+/* HOME */
+#home{background:#f0f2f5}
+.home-hero{background:linear-gradient(135deg,#014d1e,#027a32);padding:20px 16px 24px}
+.home-hero-logo{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.home-hero-logo svg{filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+.home-hero-title{font-family:'Bebas Neue',serif;font-size:28px;letter-spacing:3px;color:#fff}
+.home-hero-sub{font-family:'Rajdhani',sans-serif;font-size:12px;color:rgba(255,255,255,.5);letter-spacing:4px}
+.new-match-btn{width:100%;padding:16px;background:linear-gradient(135deg,#c8ff40,#a0e000);border:none;border-radius:14px;font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#014d1e;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 15px rgba(160,224,0,.3)}
+.home-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+.section-label{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:#888;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.no-matches{background:#fff;border-radius:14px;padding:24px;text-align:center;border:1.5px dashed #ddd}
+.no-matches p{font-size:14px;color:#bbb}
+.history-card{background:#fff;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:8px;cursor:pointer}
+.hc-badge{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',serif;font-size:11px;color:#fff;flex-shrink:0}
+.hc-info{flex:1}
+.hc-teams{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#222}
+.hc-result{font-size:12px;color:#888;margin-top:2px}
+.hc-score{text-align:right}
+.hc-score p{font-family:'Bebas Neue',serif;font-size:18px;color:#222;letter-spacing:1px}
+
+/* FORMS */
+.form-body{padding:16px;display:flex;flex-direction:column;gap:14px;flex:1}
+.field-group{display:flex;flex-direction:column;gap:6px}
+.field-label{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#555;letter-spacing:1px}
+.field-group input,.field-group select{padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:12px;font-size:15px;font-family:'Inter',sans-serif;background:#fff;color:#222;outline:none;transition:border-color .2s}
+.field-group input:focus,.field-group select:focus{border-color:#027a32}
+.color-row{display:flex;gap:8px;flex-wrap:wrap}
+.color-dot{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .2s,border-color .2s}
+.color-dot.selected{border-color:#222;transform:scale(1.15)}
+.overs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.over-chip{padding:10px 4px;background:#fff;border:1.5px solid #e0e0e0;border-radius:10px;text-align:center;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;color:#444;cursor:pointer;transition:all .2s}
+.over-chip.selected{background:#014d1e;border-color:#014d1e;color:#fff}
+.primary-btn{padding:15px;background:linear-gradient(135deg,#014d1e,#027a32);border:none;border-radius:14px;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;cursor:pointer;letter-spacing:1px;margin-top:auto}
+.primary-btn:active{opacity:.88}
+.team-preview{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;border:1.5px solid #e8e8e8;background:#fafafa}
+.team-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.team-preview-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#222}
+
+/* TOSS */
+.toss-body{padding:20px 16px;display:flex;flex-direction:column;gap:16px;flex:1;align-items:center}
+.toss-title{font-family:'Bebas Neue',serif;font-size:28px;color:#014d1e;letter-spacing:3px;text-align:center}
+.toss-teams{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.toss-team-btn{padding:16px 10px;border-radius:14px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;text-align:center;transition:all .2s}
+.toss-team-btn.selected{border-width:3px}
+.toss-team-btn .tdot{width:48px;height:48px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#fff}
+.toss-team-btn .tname{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#222}
+.elect-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.elect-btn{padding:14px;border-radius:12px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#555;text-align:center;transition:all .2s}
+.elect-btn.selected{background:#014d1e;border-color:#014d1e;color:#fff}
+
+/* PLAYERS */
+.players-body{padding:16px;flex:1;display:flex;flex-direction:column;gap:12px}
+.player-list{display:flex;flex-direction:column;gap:8px}
+.player-item{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.player-num{width:28px;height:28px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:#888;flex-shrink:0}
+.player-item input{flex:1;border:none;outline:none;font-size:14px;font-family:'Inter',sans-serif;color:#222;background:transparent}
+.player-item input::placeholder{color:#bbb}
+.player-role{font-size:11px;color:#bbb;background:#f8f8f8;padding:3px 8px;border-radius:20px}
+
+/* LIVE SCORE */
+#batting{background:#f0f2f5}
+.score-header{background:linear-gradient(135deg,#014d1e,#027a32);padding:14px 16px}
+.sh-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sh-team{display:flex;align-items:center;gap:8px}
+.sh-badge{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,.3)}
+.sh-name{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,.85);letter-spacing:.5px}
+.sh-score{text-align:center}
+.sh-runs{font-family:'Bebas Neue',serif;font-size:44px;color:#fff;letter-spacing:2px;line-height:1}
+.sh-overs{font-family:'Rajdhani',sans-serif;font-size:12px;color:rgba(255,255,255,.6);letter-spacing:1px}
+.sh-target{background:rgba(200,255,64,.2);border:1px solid rgba(200,255,64,.4);border-radius:20px;padding:4px 12px;margin-top:6px;display:inline-block}
+.sh-target p{font-family:'Rajdhani',sans-serif;font-size:12px;color:#c8ff40;font-weight:700;letter-spacing:.5px}
+.sh-stats{display:flex;justify-content:space-around;padding:10px 0 2px;border-top:1px solid rgba(255,255,255,.1);margin-top:10px}
+.sh-stat{text-align:center}
+.sh-stat-label{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:2px;font-family:'Rajdhani',sans-serif}
+.sh-stat-val{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff}
+.sh-stat-val.green{color:#4ade80}
+.sh-stat-val.red{color:#f87171}
+.sh-stat-val.gold{color:#fbbf24}
+
+/* TABS */
+.tab-bar{display:flex;background:#fff;border-bottom:1px solid #eee}
+.tab-item{flex:1;padding:12px 4px;text-align:center;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#aaa;border-bottom:3px solid transparent;cursor:pointer;letter-spacing:1px;transition:all .2s}
+.tab-item.active{color:#014d1e;border-bottom-color:#027a32}
+.tab-content{display:none;flex:1;overflow-y:auto}
+.tab-content.active{display:block}
+
+/* SCORE TAB */
+.score-tab{padding:12px}
+.over-balls-row{display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.ball-chip{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;flex-shrink:0}
+.ball-chip.dot{background:#f0f0f0;color:#bbb}
+.ball-chip.run0{background:#f0f0f0;color:#888}
+.ball-chip.run1,.ball-chip.run2,.ball-chip.run3{background:#dcfce7;color:#15803d}
+.ball-chip.run4{background:#dbeafe;color:#1d4ed8}
+.ball-chip.run6{background:#fef9c3;color:#a16207}
+.ball-chip.wicket{background:#fee2e2;color:#dc2626}
+.ball-chip.extra{background:#ede9fe;color:#6d28d9}
+.ball-chip.empty{background:#f8f8f8;color:#ddd;border:1.5px dashed #e0e0e0}
+.batters-card{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.batter-row{display:flex;align-items:center;gap:10px;padding:8px 0}
+.batter-row:not(:last-child){border-bottom:1px solid #f5f5f5}
+.batter-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.batter-info{flex:1}
+.batter-name{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#222}
+.batter-role{font-size:11px;color:#aaa}
+.batter-stats{text-align:right}
+.batter-runs{font-family:'Bebas Neue',serif;font-size:22px;color:#222;letter-spacing:1px;line-height:1}
+.batter-balls{font-size:11px;color:#aaa}
+.strike-badge{background:#fef9c3;color:#a16207;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;margin-left:4px}
+.bowler-card{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between}
+.bowler-left{display:flex;align-items:center;gap:10px}
+.bowler-avatar{width:34px;height:34px;border-radius:50%;background:#014d1e;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:#fff}
+.bowler-name{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#222}
+.bowler-role{font-size:11px;color:#aaa}
+.bowler-stats{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:#555}
+
+/* RUN BUTTONS */
+.run-pad{background:#fff;border-radius:14px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px}
+.run-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.run-btn{padding:16px 4px;border-radius:12px;border:none;font-family:'Bebas Neue',serif;font-size:22px;letter-spacing:1px;cursor:pointer;transition:transform .1s,opacity .15s}
+.run-btn:active{transform:scale(.94);opacity:.85}
+.rb-0{background:#f5f5f5;color:#888}
+.rb-1{background:#f0fdf4;color:#15803d;border:1.5px solid #bbf7d0}
+.rb-2{background:#f0fdf4;color:#15803d;border:1.5px solid #bbf7d0}
+.rb-3{background:#f0fdf4;color:#15803d;border:1.5px solid #bbf7d0}
+.rb-4{background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe}
+.rb-6{background:#fefce8;color:#a16207;border:1.5px solid #fde68a}
+.rb-w{background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca}
+.rb-ex{background:#f5f3ff;color:#6d28d9;border:1.5px solid #ddd6fe}
+.extra-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.extra-btn{padding:10px 4px;border-radius:10px;border:1.5px solid #ede9fe;background:#f5f3ff;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#6d28d9;cursor:pointer;text-align:center}
+.extra-btn:active{opacity:.8}
+.action-row{display:flex;gap:8px;margin-bottom:10px}
+.action-btn{flex:1;padding:11px;border-radius:12px;background:#fff;border:1.5px solid #e0e0e0;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#555;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.action-btn:active{background:#f5f5f5}
+
+/* SCORECARD TAB */
+.sc-tab{padding:12px}
+.sc-section{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.sc-section-title{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:#888;letter-spacing:3px;margin-bottom:10px}
+.sc-table{width:100%;border-collapse:collapse}
+.sc-table th{font-family:'Rajdhani',sans-serif;font-size:11px;color:#bbb;font-weight:700;letter-spacing:1px;padding:4px 6px;text-align:right}
+.sc-table th:first-child{text-align:left}
+.sc-table td{padding:8px 6px;font-size:13px;color:#333;border-top:1px solid #f5f5f5;text-align:right}
+.sc-table td:first-child{text-align:left;font-weight:500}
+.sc-table .out-text{font-size:11px;color:#aaa}
+.sc-total{display:flex;justify-content:space-between;padding-top:10px;border-top:1.5px solid #eee;margin-top:4px}
+.sc-total-label{font-family:'Rajdhani',sans-serif;font-size:12px;color:#888;font-weight:700}
+.sc-total-val{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#222}
+.fow-list{display:flex;flex-direction:column;gap:6px}
+.fow-item{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f5f5f5}
+.fow-item:last-child{border:none}
+.fow-wicket{color:#dc2626;font-weight:600}
+.fow-detail{color:#888}
+
+/* COMMENTARY TAB */
+.comm-tab{padding:12px;display:flex;flex-direction:column;gap:6px}
+.comm-item{background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;gap:10px;align-items:flex-start}
+.comm-ball-chip{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;flex-shrink:0}
+.comm-text{flex:1}
+.comm-over{font-size:11px;color:#aaa;margin-bottom:2px}
+.comm-desc{font-size:13px;color:#333;line-height:1.4}
+.comm-desc strong{color:#014d1e}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:100;opacity:0;transition:opacity .25s}
+.modal-overlay.show{opacity:1}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:20px 16px;width:100%;max-width:480px;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.67,0)}
+.modal-overlay.show .modal-box{transform:translateY(0)}
+.modal-title{font-family:'Bebas Neue',serif;font-size:24px;color:#222;letter-spacing:2px;margin-bottom:16px}
+.modal-field{margin-bottom:12px}
+.modal-field label{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#666;letter-spacing:1px;display:block;margin-bottom:6px}
+.modal-field input,.modal-field select{width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:12px;font-size:15px;font-family:'Inter',sans-serif;color:#222;outline:none}
+.modal-field input:focus,.modal-field select:focus{border-color:#027a32}
+.modal-btns{display:flex;gap:10px;margin-top:16px}
+.modal-cancel{flex:1;padding:13px;border-radius:12px;border:1.5px solid #e0e0e0;background:#f5f5f5;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#666;cursor:pointer}
+.modal-ok{flex:1;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#014d1e,#027a32);font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;cursor:pointer}
+
+/* HOW OUT CHIPS */
+.how-out-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.how-out-chip{padding:9px 4px;border-radius:10px;border:1.5px solid #e0e0e0;background:#fff;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:#555;text-align:center;cursor:pointer}
+.how-out-chip.selected{background:#fef2f2;border-color:#fecaca;color:#dc2626}
+
+/* INNINGS BREAK */
+#innBreak{background:linear-gradient(160deg,#014d1e,#010e03);align-items:center;justify-content:center;padding:24px}
+.ib-trophy{font-size:60px;text-align:center;margin-bottom:16px}
+.ib-title{font-family:'Bebas Neue',serif;font-size:32px;color:#c8ff40;letter-spacing:4px;text-align:center;margin-bottom:8px}
+.ib-sub{font-family:'Rajdhani',sans-serif;font-size:16px;color:rgba(255,255,255,.7);text-align:center;margin-bottom:24px;line-height:1.5}
+.ib-card{background:rgba(255,255,255,.08);border-radius:16px;padding:16px;width:100%;margin-bottom:24px}
+.ib-score-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ib-team{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff}
+.ib-score{font-family:'Bebas Neue',serif;font-size:26px;color:#fff;letter-spacing:1px}
+.ib-target{font-family:'Rajdhani',sans-serif;font-size:14px;color:#c8ff40;text-align:center;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)}
+.ib-btn{width:100%;padding:16px;background:linear-gradient(135deg,#c8ff40,#a0e000);border:none;border-radius:14px;font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#014d1e;cursor:pointer;letter-spacing:1px}
+
+/* RESULT */
+#result{background:linear-gradient(160deg,#014d1e,#010e03)}
+.result-header{background:rgba(0,0,0,.2);padding:20px 16px;text-align:center}
+.result-confetti{font-size:40px;margin-bottom:10px}
+.result-winner{font-family:'Bebas Neue',serif;font-size:30px;color:#c8ff40;letter-spacing:3px;margin-bottom:6px}
+.result-margin{font-family:'Rajdhani',sans-serif;font-size:16px;color:rgba(255,255,255,.7)}
+.result-body{background:#f0f2f5;flex:1;border-radius:20px 20px 0 0;padding:16px;overflow-y:auto;margin-top:-10px}
+.result-scores{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.result-score-card{background:#fff;border-radius:14px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.rsc-team{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:#888;letter-spacing:2px;margin-bottom:6px}
+.rsc-score{font-family:'Bebas Neue',serif;font-size:28px;color:#222;letter-spacing:1px;line-height:1}
+.rsc-overs{font-size:12px;color:#aaa;margin-top:4px}
+.result-new-btn{width:100%;padding:15px;background:linear-gradient(135deg,#014d1e,#027a32);border:none;border-radius:14px;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;cursor:pointer;letter-spacing:1px;margin-top:14px}
+
+/* MOM CARD */
+.mom-card{background:linear-gradient(135deg,#fef9c3,#fde68a);border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.mom-trophy{font-size:30px}
+.mom-info{}
+.mom-label{font-size:11px;color:#a16207;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.mom-name{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#78350f}
+.mom-stats{font-size:12px;color:#92400e}
+
+/* UTILS */
+.divider{height:1px;background:#f0f0f0;margin:4px 0}
+.loader{width:32px;height:32px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="screen active" id="splash">
+  <div style="animation:float 3.5s ease-in-out 2s infinite">
+    <svg class="splash-ball" width="140" height="140" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="sbg" cx="50%" cy="35%" r="65%"><stop offset="0%" stop-color="#016030"/><stop offset="100%" stop-color="#010e03"/></radialGradient>
+        <radialGradient id="tG" cx="30%" cy="25%" r="75%"><stop offset="0%" stop-color="#e8ff60"/><stop offset="35%" stop-color="#b8d400"/><stop offset="70%" stop-color="#88a800"/><stop offset="100%" stop-color="#556800"/></radialGradient>
+        <linearGradient id="bF" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#c8a030"/><stop offset="50%" stop-color="#fff5a0"/><stop offset="100%" stop-color="#a07818"/></linearGradient>
+        <linearGradient id="bE" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7a5010"/><stop offset="100%" stop-color="#503808"/></linearGradient>
+        <filter id="glow"><feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="rgba(160,200,0,.5)"/></filter>
+        <filter id="bsd"><feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="rgba(0,0,0,.7)"/></filter>
+        <clipPath id="tc"><circle cx="112" cy="106" r="20"/></clipPath>
+      </defs>
+      <circle cx="80" cy="80" r="76" fill="url(#sbg)" filter="url(#bsd)"/>
+      <circle cx="80" cy="80" r="76" fill="none" stroke="#01411C" stroke-width="4"/>
+      <g transform="rotate(-30,65,85)">
+        <ellipse cx="65" cy="22" rx="7" ry="5" fill="#3a1a08"/>
+        <rect x="59" y="22" width="12" height="30" rx="6" fill="#9a5828"/>
+        <rect x="59" y="25" width="12" height="3.5" rx="2" fill="#120608" opacity=".75"/>
+        <rect x="59" y="30.5" width="12" height="3.5" rx="2" fill="#120608" opacity=".75"/>
+        <rect x="59" y="36" width="12" height="3.5" rx="2" fill="#120608" opacity=".75"/>
+        <rect x="59" y="41.5" width="12" height="3.5" rx="2" fill="#120608" opacity=".75"/>
+        <rect x="60" y="22" width="4" height="30" rx="3" fill="rgba(255,255,255,.13)"/>
+        <path d="M59,52 Q56,57 54,64 L76,64 Q74,57 71,52 Z" fill="#c89820"/>
+        <path d="M54,64 L51,130 Q51,143 65,144 Q79,143 79,130 L76,64 Z" fill="url(#bE)"/>
+        <path d="M56,64 L54,130 Q54,141 65,141 Q76,141 76,130 L74,64 Z" fill="url(#bF)"/>
+        <path d="M56,64 L54,100 L62,100 L63,64 Z" fill="rgba(255,255,255,.18)"/>
+        <line x1="56" y1="82" x2="74" y2="82" stroke="#c8a030" stroke-width=".8" opacity=".4"/>
+        <line x1="56" y1="92" x2="74" y2="92" stroke="#c8a030" stroke-width=".8" opacity=".35"/>
+        <line x1="56" y1="102" x2="74" y2="102" stroke="#c8a030" stroke-width=".8" opacity=".3"/>
+        <line x1="55" y1="112" x2="74" y2="112" stroke="#c8a030" stroke-width=".8" opacity=".28"/>
+        <line x1="55" y1="122" x2="74" y2="122" stroke="#c8a030" stroke-width=".8" opacity=".22"/>
+        <path d="M51,64 L51,130 Q51,143 54,143 L54,130 L53,64 Z" fill="#7a5008"/>
+        <path d="M76,64 L79,130 Q79,143 76,143 L76,130 L74,64 Z" fill="#7a5008"/>
+        <ellipse cx="65" cy="141" rx="11" ry="4" fill="#9a6818"/>
+      </g>
+      <g filter="url(#glow)">
+        <circle cx="112" cy="106" r="20" fill="url(#tG)"/>
+        <g clip-path="url(#tc)">
+          <path d="M93,106 Q102,95 131,106" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="3" stroke-linecap="round"/>
+          <path d="M93,106 Q102,95 131,106" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M93,106 Q102,117 131,106" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="3" stroke-linecap="round"/>
+          <path d="M93,106 Q102,117 131,106" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="97" y1="104" x2="97" y2="100" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="102" y1="100" x2="102" y2="96" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="108" y1="98" x2="108" y2="94" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="114" y1="98" x2="114" y2="94" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="120" y1="100" x2="120" y2="96" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="97" y1="108" x2="97" y2="112" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="102" y1="112" x2="102" y2="116" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="108" y1="114" x2="108" y2="118" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="114" y1="114" x2="114" y2="118" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="120" y1="112" x2="120" y2="116" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+          <ellipse cx="104" cy="97" rx="7" ry="5" fill="rgba(255,255,220,.4)" transform="rotate(-25 104 97)"/>
+        </g>
+        <circle cx="112" cy="106" r="20" fill="none" stroke="rgba(0,0,0,.2)" stroke-width="1"/>
+      </g>
+      <circle cx="36" cy="33" r="17" fill="none" stroke="rgba(255,255,255,.88)" stroke-width="2.5"/>
+      <circle cx="43" cy="30" r="13" fill="url(#sbg)"/>
+      <polygon points="51,21 53,27 59,27 54,31 56,37 51,33 46,37 48,31 43,27 49,27" fill="#fff"/>
+    </svg>
+  </div>
+  <div class="splash-name">
+    <p style="font-family:'Bebas Neue',serif;font-size:52px;letter-spacing:6px;color:#fff;line-height:1;text-align:center">CRICBUZZ<span style="color:#c8ff40"> PK</span></p>
+  </div>
+  <div class="splash-sub" style="display:flex;align-items:center;gap:10px">
+    <div style="height:1px;width:40px;background:rgba(255,255,255,.3)"></div>
+    <p style="font-family:'Rajdhani',sans-serif;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:5px">LIVE CRICKET SCORER</p>
+    <div style="height:1px;width:40px;background:rgba(255,255,255,.3)"></div>
+  </div>
+  <div class="splash-loader"><div class="loader"></div></div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="home">
+  <div class="home-hero">
+    <div class="home-hero-logo">
+      <svg width="44" height="44" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="hbg" cx="50%" cy="35%" r="65%"><stop offset="0%" stop-color="#016030"/><stop offset="100%" stop-color="#010e03"/></radialGradient><radialGradient id="htG" cx="30%" cy="25%" r="75%"><stop offset="0%" stop-color="#e8ff60"/><stop offset="50%" stop-color="#b8d400"/><stop offset="100%" stop-color="#556800"/></radialGradient><clipPath id="htc"><circle cx="112" cy="106" r="20"/></clipPath></defs>
+        <circle cx="80" cy="80" r="76" fill="url(#hbg)"/>
+        <circle cx="80" cy="80" r="76" fill="none" stroke="#01411C" stroke-width="4"/>
+        <g transform="rotate(-30,65,85)">
+          <rect x="59" y="22" width="12" height="30" rx="6" fill="#9a5828"/>
+          <rect x="59" y="25" width="12" height="3.5" rx="2" fill="#120608" opacity=".75"/>
+          <rect x="59" y="31" width="12" height="3.5" rx="2" fill="#120608" opacity=".75"/>
+          <rect x="59" y="37" width="12" height="3.5" rx="2" fill="#120608" opacity=".75"/>
+          <rect x="59" y="43" width="12" height="3.5" rx="2" fill="#120608" opacity=".75"/>
+          <path d="M59,52 Q56,57 54,64 L76,64 Q74,57 71,52 Z" fill="#c89820"/>
+          <path d="M54,64 L51,130 Q51,143 65,144 Q79,143 79,130 L76,64 Z" fill="#7a5010"/>
+          <path d="M56,64 L54,130 Q54,141 65,141 Q76,141 76,130 L74,64 Z" fill="#f5e080"/>
+          <ellipse cx="65" cy="141" rx="11" ry="4" fill="#9a6818"/>
+        </g>
+        <circle cx="112" cy="106" r="20" fill="url(#htG)"/>
+        <g clip-path="url(#htc)">
+          <path d="M93,106 Q102,95 131,106" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M93,106 Q102,117 131,106" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        </g>
+        <circle cx="36" cy="33" r="17" fill="none" stroke="rgba(255,255,255,.88)" stroke-width="2.5"/>
+        <circle cx="43" cy="30" r="13" fill="url(#hbg)"/>
+        <polygon points="51,21 53,27 59,27 54,31 56,37 51,33 46,37 48,31 43,27 49,27" fill="#fff"/>
+      </svg>
+      <div>
+        <div class="home-hero-title">CRICBUZZ PK</div>
+        <div class="home-hero-sub">LIVE CRICKET SCORER</div>
+      </div>
+    </div>
+    <button class="new-match-btn" onclick="goSetup()">+ NEW MATCH</button>
+    <button onclick="showLiveMatches()" style="width:100%;padding:13px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:14px;font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;cursor:pointer;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#4ade80;display:inline-block;animation:pulse 1.5s infinite"></span> WATCH LIVE MATCHES</button>
+  </div>
+  <div class="home-body">
+    <div>
+      <div class="section-label">Match History</div>
+      <div id="historyList"><div class="no-matches"><p>No matches yet</p><p style="margin-top:4px;font-size:12px">Start your first match!</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div class="screen" id="setup">
+  <div class="app-header">
+    <button class="back-btn" onclick="showScreen('home')">←</button>
+    <h1>MATCH SETUP</h1>
+  </div>
+  <div class="form-body">
+    <div class="field-group">
+      <span class="field-label">TEAM A — NAME</span>
+      <input type="text" id="team1Name" placeholder="e.g. Pakistan" maxlength="20">
+    </div>
+    <div class="field-group">
+      <span class="field-label">TEAM A — COLOR</span>
+      <div class="color-row" id="colorRow1"></div>
+    </div>
+    <div style="height:1px;background:#f0f0f0"></div>
+    <div class="field-group">
+      <span class="field-label">TEAM B — NAME</span>
+      <input type="text" id="team2Name" placeholder="e.g. India" maxlength="20">
+    </div>
+    <div class="field-group">
+      <span class="field-label">TEAM B — COLOR</span>
+      <div class="color-row" id="colorRow2"></div>
+    </div>
+    <div style="height:1px;background:#f0f0f0"></div>
+    <div class="field-group">
+      <span class="field-label">FORMAT</span>
+      <div class="overs-grid">
+        <div class="over-chip selected" onclick="selectFormat(this,6,'gali')">Gali<br><small>6 ov</small></div>
+        <div class="over-chip" onclick="selectFormat(this,10,'t10')">T10<br><small>10 ov</small></div>
+        <div class="over-chip" onclick="selectFormat(this,20,'t20')">T20<br><small>20 ov</small></div>
+        <div class="over-chip" onclick="selectFormat(this,50,'odi')">ODI<br><small>50 ov</small></div>
+      </div>
+    </div>
+    <div class="field-group">
+      <span class="field-label">CUSTOM OVERS (1-50)</span>
+      <input type="number" id="customOvers" placeholder="Or enter custom overs" min="1" max="50">
+    </div>
+    <button class="primary-btn" onclick="goToss()">NEXT: TOSS →</button>
+  </div>
+</div>
+
+<!-- TOSS -->
+<div class="screen" id="toss">
+  <div class="app-header">
+    <button class="back-btn" onclick="showScreen('setup')">←</button>
+    <h1>TOSS</h1>
+  </div>
+  <div class="toss-body">
+    <p class="toss-title">WHO WON THE TOSS?</p>
+    <div class="toss-teams">
+      <div class="toss-team-btn" id="tossBtn0" onclick="selectTossWinner(0)">
+        <div class="tdot" id="tossDot0"></div>
+        <div class="tname" id="tossName0">Team A</div>
+      </div>
+      <div class="toss-team-btn" id="tossBtn1" onclick="selectTossWinner(1)">
+        <div class="tdot" id="tossDot1"></div>
+        <div class="tname" id="tossName1">Team B</div>
+      </div>
+    </div>
+    <p class="toss-title" style="margin-top:8px">ELECTED TO?</p>
+    <div class="elect-row">
+      <div class="elect-btn selected" id="electBat" onclick="selectElect('bat')">🏏 BAT FIRST</div>
+      <div class="elect-btn" id="electBowl" onclick="selectElect('bowl')">⚾ BOWL FIRST</div>
+    </div>
+    <button class="primary-btn" style="width:100%;margin-top:auto" onclick="goPlayers()">NEXT: PLAYERS →</button>
+  </div>
+</div>
+
+<!-- PLAYERS -->
+<div class="screen" id="players">
+  <div class="app-header">
+    <button class="back-btn" onclick="showScreen('toss')">←</button>
+    <h1 id="playersTitle">BATTING TEAM</h1>
+  </div>
+  <div class="players-body">
+    <p style="font-size:13px;color:#888;margin-bottom:4px">Enter opening batters and first bowler. Others can be added during match.</p>
+    <div class="field-group">
+      <span class="field-label">OPENING BATTER 1 (STRIKER)</span>
+      <input type="text" id="p1" placeholder="Name" style="padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:12px;font-size:15px;outline:none">
+    </div>
+    <div class="field-group">
+      <span class="field-label">OPENING BATTER 2</span>
+      <input type="text" id="p2" placeholder="Name" style="padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:12px;font-size:15px;outline:none">
+    </div>
+    <div class="field-group">
+      <span class="field-label">FIRST BOWLER</span>
+      <input type="text" id="bowler1" placeholder="Name" style="padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:12px;font-size:15px;outline:none">
+    </div>
+    <button class="primary-btn" onclick="startMatch()">START MATCH! 🏏</button>
+  </div>
+</div>
+
+<!-- BATTING / LIVE SCORE -->
+<div class="screen" id="batting">
+  <div class="score-header" id="scoreHeader">
+    <div class="sh-top">
+      <div class="sh-team">
+        <div class="sh-badge" id="shBadge1"></div>
+        <div class="sh-name" id="shName1"></div>
+      </div>
+      <div class="sh-score">
+        <div class="sh-runs" id="shRuns">0/0</div>
+        <div class="sh-overs" id="shOvers">0.0 / 20 OV</div>
+        <div class="sh-target" id="shTarget" style="display:none"><p id="shTargetText"></p></div>
+      </div>
+      <div class="sh-team" style="flex-direction:row-reverse">
+        <div class="sh-badge" id="shBadge2"></div>
+        <div class="sh-name" id="shName2" style="text-align:right"></div>
+      </div>
+    </div>
+    <div class="sh-stats">
+      <div class="sh-stat"><div class="sh-stat-label">CRR</div><div class="sh-stat-val green" id="shCRR">0.00</div></div>
+      <div class="sh-stat"><div class="sh-stat-label">RRR</div><div class="sh-stat-val red" id="shRRR">—</div></div>
+      <div class="sh-stat"><div class="sh-stat-label">LAST 5</div><div class="sh-stat-val" id="shLast5">—</div></div>
+      <div class="sh-stat"><div class="sh-stat-label">PROJ</div><div class="sh-stat-val gold" id="shProj">—</div></div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item active" onclick="switchTab('score')">SCORE</div>
+    <div class="tab-item" onclick="switchTab('scorecard')">SCORECARD</div>
+    <div class="tab-item" onclick="switchTab('commentary')">COMMENTARY</div>
+  </div>
+
+  <!-- SCORE TAB -->
+  <div class="tab-content active score-tab" id="tabScore">
+    <div class="over-balls-row" id="overBallsRow">
+      <span style="font-family:'Rajdhani',sans-serif;font-size:11px;color:#aaa;font-weight:700;letter-spacing:1px">THIS OVER</span>
+    </div>
+    <div class="batters-card" id="battersCard"></div>
+    <div class="bowler-card" id="bowlerCard"></div>
+    <div class="action-row">
+      <button class="action-btn" onclick="undoLast()">↩ UNDO</button>
+      <button class="action-btn" onclick="openChangeStrike()">⇄ SWAP STRIKE</button>
+    </div>
+    <div class="run-pad">
+      <div class="run-grid">
+        <button class="run-btn rb-0" onclick="addRun(0)">0</button>
+        <button class="run-btn rb-1" onclick="addRun(1)">1</button>
+        <button class="run-btn rb-2" onclick="addRun(2)">2</button>
+        <button class="run-btn rb-3" onclick="addRun(3)">3</button>
+        <button class="run-btn rb-4" onclick="addRun(4)">4</button>
+        <button class="run-btn rb-6" onclick="addRun(6)">6</button>
+        <button class="run-btn rb-w" onclick="openWicketModal()">OUT</button>
+        <button class="run-btn rb-ex" onclick="toggleExtras()">EXTRA</button>
+      </div>
+      <div class="extra-row" id="extraRow" style="display:none;margin-top:8px">
+        <button class="extra-btn" onclick="addExtra('wd',1)">Wide +1</button>
+        <button class="extra-btn" onclick="addExtra('nb',1)">No Ball</button>
+        <button class="extra-btn" onclick="addExtra('lb',1)">Leg Bye</button>
+        <button class="extra-btn" onclick="addExtra('b',1)">Bye</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCORECARD TAB -->
+  <div class="tab-content sc-tab" id="tabScorecard">
+    <div class="sc-section" id="scBatting"></div>
+    <div class="sc-section" id="scBowling"></div>
+    <div class="sc-section" id="scFOW"></div>
+  </div>
+
+  <!-- COMMENTARY TAB -->
+  <div class="tab-content comm-tab" id="tabCommentary"></div>
+</div>
+
+<!-- INNINGS BREAK -->
+<div class="screen" id="innBreak">
+  <div class="ib-trophy">🏏</div>
+  <div class="ib-title">INNINGS OVER!</div>
+  <div class="ib-sub" id="ibSub">First innings complete</div>
+  <div class="ib-card" id="ibCard"></div>
+  <button class="ib-btn" onclick="startSecondInnings()">START 2ND INNINGS →</button>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="result">
+  <div class="result-header">
+    <div class="result-confetti">🏆</div>
+    <div class="result-winner" id="resultWinner">PAKISTAN WINS!</div>
+    <div class="result-margin" id="resultMargin">by 5 wickets</div>
+  </div>
+  <div class="result-body">
+    <div class="result-scores" id="resultScores"></div>
+    <div class="mom-card" id="momCard"></div>
+    <div class="sc-section" id="resultSc1"></div>
+    <div class="sc-section" id="resultSc2"></div>
+    <button class="result-new-btn" onclick="newMatch()">+ NEW MATCH</button>
+  </div>
+</div>
+
+
+<div class="screen" id="liveMatches">
+  <div class="app-header">
+    <button class="back-btn" onclick="showScreen('home')">←</button>
+    <h1>LIVE MATCHES</h1>
+    <div style="width:10px;height:10px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite"></div>
+  </div>
+  <div style="padding:16px;flex:1">
+    <div id="liveList"><div style="text-align:center;padding:40px"><div style="font-size:40px;margin-bottom:12px">📡</div><p style="font-family:Rajdhani,sans-serif;font-size:16px;color:#555;font-weight:700">Loading live matches...</p></div></div>
+  </div>
+</div>
+
+<div class="screen" id="liveViewer">
+  <div class="app-header">
+    <button class="back-btn" onclick="showScreen('liveMatches')">←</button>
+    <h1>LIVE SCORE</h1>
+    <div style="display:flex;align-items:center;gap:5px"><div style="width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite"></div><span style="font-family:Rajdhani,sans-serif;font-size:11px;color:rgba(255,255,255,.7);letter-spacing:2px">LIVE</span></div>
+  </div>
+  <div id="viewerScoreHeader"></div>
+  <div style="padding:16px;flex:1;overflow-y:auto">
+    <div id="viewerBatters" style="background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)"></div>
+    <div id="viewerBowler" style="background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)"></div>
+    <div id="viewerOverBalls" style="background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<!-- Wicket Modal -->
+<div class="modal-overlay" id="wicketModal">
+  <div class="modal-box">
+    <div class="modal-title">WICKET! 🏏</div>
+    <div class="modal-field">
+      <label>BATTER OUT</label>
+      <input type="text" id="wktBatterName" readonly>
+    </div>
+    <div class="modal-field">
+      <label>HOW OUT</label>
+      <div class="how-out-grid">
+        <div class="how-out-chip selected" onclick="selectHowOut(this,'Bowled')">Bowled</div>
+        <div class="how-out-chip" onclick="selectHowOut(this,'Caught')">Caught</div>
+        <div class="how-out-chip" onclick="selectHowOut(this,'LBW')">LBW</div>
+        <div class="how-out-chip" onclick="selectHowOut(this,'Run Out')">Run Out</div>
+        <div class="how-out-chip" onclick="selectHowOut(this,'Stumped')">Stumped</div>
+        <div class="how-out-chip" onclick="selectHowOut(this,'Hit Wicket')">Hit Wkt</div>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>NEXT BATTER NAME</label>
+      <input type="text" id="wktNewBatter" placeholder="Enter name">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('wicketModal')">CANCEL</button>
+      <button class="modal-ok" onclick="confirmWicket()">CONFIRM</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Bowler Modal -->
+<div class="modal-overlay" id="bowlerModal">
+  <div class="modal-box">
+    <div class="modal-title" id="bowlerModalTitle">OVER COMPLETE!</div>
+    <div class="modal-field">
+      <label>NEW BOWLER NAME</label>
+      <input type="text" id="newBowlerInput" placeholder="Enter bowler name">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-ok" onclick="confirmNewBowler()" style="width:100%">START NEXT OVER →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Extra Runs Modal -->
+<div class="modal-overlay" id="extraRunsModal">
+  <div class="modal-box">
+    <div class="modal-title" id="extraModalTitle">WIDE BALL</div>
+    <div class="modal-field">
+      <label>RUNS (including extra)</label>
+      <input type="number" id="extraRunsInput" value="1" min="1" max="7">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('extraRunsModal')">CANCEL</button>
+      <button class="modal-ok" onclick="confirmExtraRuns()">CONFIRM</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// ============================================================
+// FIREBASE CONFIG
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyAntakPpenBF4Jwr-ZaPtBCcJr50Ifu9bc",
+  authDomain: "cricbuzz-pk-8327b.firebaseapp.com",
+  databaseURL: "https://cricbuzz-pk-8327b-default-rtdb.firebaseio.com",
+  projectId: "cricbuzz-pk-8327b",
+  storageBucket: "cricbuzz-pk-8327b.firebasestorage.app",
+  messagingSenderId: "238266204639",
+  appId: "1:238266204639:web:
+const COLORS = ['#007A3D','#1a56db','#dc2626','#7c3aed','#ea580c','#0891b2','#be185d','#854d0e'];
+const COLOR_NAMES = ['Pakistan Green','Royal Blue','Cricket Red','Royal Purple','Orange','Sky Blue','Pink','Brown'];
+
+let G = {
+  teams: [
+    {name:'Team A',color:'#007A3D'},
+    {name:'Team B',color:'#1a56db'}
+  ],
+  overs: 20,
+  format: 'gali',
+  toss: {winner:0, elected:'bat'},
+  batting: 0,
+  innings: 0,
+  scores: [
+    {r:0, w:0, balls:0, extras:{wd:0,nb:0,lb:0,b:0}},
+    {r:0, w:0, balls:0, extras:{wd:0,nb:0,lb:0,b:0}}
+  ],
+  batters: [[],[]], // {name,r,b,4s,6s,out,how,inn}
+  bowlers: [[],[]], // {name,balls,r,w,maiden}
+  curBatters: [0,1],
+  striker: 0,
+  curBowler: 0,
+  overBalls: [],
+  allBalls: [[],[]],
+  fow: [[],[]],
+  partnerships: [[],[]],
+  partStart: [0,0],
+  history: [],
+  selectedHowOut: 'Bowled',
+  currentExtraType: 'wd',
+  lastFiveOvers: [[],[]],
+  overRuns: [[],[]]
+};
+
+let matchHistory = JSON.parse(localStorage.getItem('cpk_history')||'[]');
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = () => {
+  setTimeout(()=>{ showScreen('home'); renderHistory(); }, 2800);
+  buildColorPickers();
+};
+
+function buildColorPickers(){
+  ['colorRow1','colorRow2'].forEach((id,ti)=>{
+    const el = document.getElementById(id);
+    COLORS.forEach((c,i)=>{
+      const d = document.createElement('div');
+      d.className='color-dot'+(i===ti?' selected':'');
+      d.style.background=c;
+      d.onclick=()=>{
+        el.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('selected'));
+        d.classList.add('selected');
+        G.teams[ti].color=c;
+      };
+      el.appendChild(d);
+    });
+    G.teams[ti].color = COLORS[ti];
+  });
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function goSetup(){ showScreen('setup'); }
+
+function goToss(){
+  const n1 = document.getElementById('team1Name').value.trim()||'Team A';
+  const n2 = document.getElementById('team2Name').value.trim()||'Team B';
+  G.teams[0].name = n1;
+  G.teams[1].name = n2;
+  const co = parseInt(document.getElementById('customOvers').value);
+  if(co>=1&&co<=50) G.overs=co;
+  document.getElementById('tossName0').textContent = n1;
+  document.getElementById('tossName1').textContent = n2;
+  document.getElementById('tossDot0').style.background = G.teams[0].color;
+  document.getElementById('tossDot0').textContent = initials(n1);
+  document.getElementById('tossDot1').style.background = G.teams[1].color;
+  document.getElementById('tossDot1').textContent = initials(n2);
+  selectTossWinner(0);
+  showScreen('toss');
+}
+
+function goPlayers(){
+  const batting = G.toss.elected==='bat'?G.toss.winner:(1-G.toss.winner);
+  G.batting = batting;
+  const bowling = 1-batting;
+  document.getElementById('playersTitle').textContent = G.teams[batting].name.toUpperCase()+' BATTING';
+  document.getElementById('p1').value='';
+  document.getElementById('p2').value='';
+  document.getElementById('bowler1').value='';
+  document.getElementById('p1').placeholder='Opener 1 (e.g. Babar Azam)';
+  document.getElementById('p2').placeholder='Opener 2 (e.g. Mohammad Rizwan)';
+  document.getElementById('bowler1').placeholder='Bowler ('+G.teams[bowling].name+')';
+  showScreen('players');
+}
+
+function startMatch(){
+  const p1 = document.getElementById('p1').value.trim()||'Batter 1';
+  const p2 = document.getElementById('p2').value.trim()||'Batter 2';
+  const bwl = document.getElementById('bowler1').value.trim()||'Bowler 1';
+  G.innings=0;
+  G.scores=[
+    {r:0,w:0,balls:0,extras:{wd:0,nb:0,lb:0,b:0}},
+    {r:0,w:0,balls:0,extras:{wd:0,nb:0,lb:0,b:0}}
+  ];
+  G.batters=[[],[]];
+  G.bowlers=[[],[]];
+  G.overBalls=[];
+  G.allBalls=[[],[]];
+  G.fow=[[],[]];
+  G.partnerships=[[],[]];
+  G.partStart=[0,0];
+  G.history=[];
+  G.lastFiveOvers=[[],[]];
+  G.overRuns=[[],[]];
+  G.batters[0]=[
+    {name:p1,r:0,b:0,fours:0,sixes:0,out:false,how:'',notOut:true},
+    {name:p2,r:0,b:0,fours:0,sixes:0,out:false,how:'',notOut:true}
+  ];
+  G.curBatters=[0,1];
+  G.striker=0;
+  const bowl = 1-G.batting;
+  G.bowlers[bowl]=[{name:bwl,balls:0,r:0,w:0,maiden:0,overRuns:0}];
+  G.curBowler=0;
+  updateUI();
+  showScreen('batting');
+  startLiveMatch();
+}
+
+// ============================================================
+// SCORING
+// ============================================================
+function addRun(r){
+  saveHistory();
+  const inn=G.innings, sc=G.scores[inn];
+  const bowl=1-G.batting;
+  const bat=G.batters[inn][G.curBatters[G.striker]];
+  const bwl=G.bowlers[bowl][G.curBowler];
+  bat.r+=r; bat.b++;
+  if(r===4)bat.fours++;
+  if(r===6)bat.sixes++;
+  bwl.r+=r; bwl.balls++; bwl.overRuns+=r;
+  sc.r+=r; sc.balls++;
+  const label=r===4?'4':r===6?'6':r;
+  G.overBalls.push({val:label,type:r===4?'run4':r===6?'run6':r===0?'run0':'run'+Math.min(r,3)});
+  G.allBalls[inn].push({over:Math.floor(sc.balls/6),ball:sc.balls%6||6,type:'run',val:r,striker:G.curBatters[G.striker],bowler:G.curBowler});
+  addCommentary(inn,r);
+  if(r%2===1) G.striker=1-G.striker;
+  checkOver();
+  checkInningsEnd();
+  updateUI();
+  pushLiveScore();
+}
+
+function addExtra(type,runs){
+  saveHistory();
+  const inn=G.innings, sc=G.scores[inn];
+  const bowl=1-G.batting;
+  const bwl=G.bowlers[bowl][G.curBowler];
+  const typeNames={wd:'Wide',nb:'No Ball',lb:'Leg Bye',b:'Bye'};
+  sc.r+=runs; sc.extras[type]+=runs;
+  bwl.r+=runs; bwl.overRuns+=runs;
+  const isBall=(type==='lb'||type==='b');
+  if(isBall){bwl.balls++;sc.balls++;G.batters[inn][G.curBatters[G.striker]].b++;}
+  const lbl=type==='wd'?'Wd':type==='nb'?'NB':type==='lb'?'LB':'B';
+  G.overBalls.push({val:runs>1?lbl+runs:lbl,type:'extra'});
+  G.allBalls[inn].push({type:'extra',subtype:type,val:runs,striker:G.curBatters[G.striker],bowler:G.curBowler});
+  addCommentaryExtra(inn,typeNames[type],runs);
+  if(isBall&&runs%2===1) G.striker=1-G.striker;
+  if(isBall) checkOver();
+  closeModal('extraRunsModal');
+  document.getElementById('extraRow').style.display='none';
+  checkInningsEnd();
+  updateUI();
+}
+
+function openWicketModal(){
+  const bat=G.batters[G.innings][G.curBatters[G.striker]];
+  document.getElementById('wktBatterName').value=bat?bat.name:'Batter';
+  document.getElementById('wktNewBatter').value='';
+  G.selectedHowOut='Bowled';
+  document.querySelectorAll('.how-out-chip').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.how-out-chip')[0].classList.add('selected');
+  openModal('wicketModal');
+}
+
+function confirmWicket(){
+  saveHistory();
+  const inn=G.innings, sc=G.scores[inn];
+  const bowl=1-G.batting;
+  const bwl=G.bowlers[bowl][G.curBowler];
+  const newName=document.getElementById('wktNewBatter').value.trim()||('Batter '+(sc.w+3));
+  const outBat=G.batters[inn][G.curBatters[G.striker]];
+  outBat.out=true; outBat.how=G.selectedHowOut; outBat.b++;
+  bwl.w++; bwl.balls++; bwl.overRuns++;
+  sc.w++; sc.balls++;
+  G.fow[inn].push({w:sc.w,r:sc.r,over:fmtOver(sc.balls-1),name:outBat.name,how:G.selectedHowOut});
+  G.overBalls.push({val:'W',type:'wicket'});
+  G.allBalls[inn].push({type:'wicket',striker:G.curBatters[G.striker],bowler:G.curBowler,how:G.selectedHowOut});
+  addCommentaryWicket(inn,outBat.name,G.selectedHowOut,bwl.name);
+  if(sc.w<10){
+    const newIdx=G.batters[inn].length;
+    G.batters[inn].push({name:newName,r:0,b:0,fours:0,sixes:0,out:false,how:'',notOut:true});
+    G.curBatters[G.striker]=newIdx;
+  }
+  checkOver();
+  closeModal('wicketModal');
+  if(sc.w>=10){setTimeout(()=>endInnings(),300);return;}
+  updateUI();
+}
+
+function selectHowOut(el,how){
+  document.querySelectorAll('.how-out-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  G.selectedHowOut=how;
+}
+
+function showExtraModal(type){
+  G.currentExtraType=type;
+  const names={wd:'WIDE',nb:'NO BALL',lb:'LEG BYE',b:'BYE'};
+  document.getElementById('extraModalTitle').textContent=names[type];
+  document.getElementById('extraRunsInput').value=1;
+  openModal('extraRunsModal');
+}
+
+function confirmExtraRuns(){
+  const runs=parseInt(document.getElementById('extraRunsInput').value)||1;
+  addExtra(G.currentExtraType,runs);
+}
+
+function toggleExtras(){
+  const row=document.getElementById('extraRow');
+  row.style.display=row.style.display==='none'?'grid':'none';
+}
+
+function checkOver(){
+  const sc=G.scores[G.innings];
+  if(sc.balls>0&&sc.balls%6===0){
+    const completedOver=sc.balls/6;
+    const bwl=G.bowlers[1-G.batting][G.curBowler];
+    G.overRuns[G.innings].push(bwl.overRuns||0);
+    if(G.lastFiveOvers[G.innings].length>=5)G.lastFiveOvers[G.innings].shift();
+    G.lastFiveOvers[G.innings].push(bwl.overRuns||0);
+    bwl.overRuns=0;
+    G.striker=1-G.striker;
+    G.overBalls=[];
+    if(G.overs<999&&completedOver>=G.overs){endInnings();return;}
+    document.getElementById('bowlerModalTitle').textContent=`OVER ${completedOver} DONE!`;
+    document.getElementById('newBowlerInput').value='';
+    openModal('bowlerModal');
+  }
+}
+
+function confirmNewBowler(){
+  const name=document.getElementById('newBowlerInput').value.trim()||'Bowler';
+  const bowl=1-G.batting;
+  G.bowlers[bowl].push({name,balls:0,r:0,w:0,maiden:0,overRuns:0});
+  G.curBowler=G.bowlers[bowl].length-1;
+  closeModal('bowlerModal');
+  updateUI();
+}
+
+function openChangeStrike(){ G.striker=1-G.striker; updateUI(); }
+
+function undoLast(){
+  if(!G.history.length)return;
+  const prev=G.history.pop();
+  Object.assign(G,JSON.parse(prev));
+  updateUI();
+}
+
+function saveHistory(){ G.history.push(JSON.stringify({scores:G.scores,batters:G.batters,bowlers:G.bowlers,curBatters:G.curBatters,striker:G.striker,curBowler:G.curBowler,overBalls:G.overBalls,allBalls:G.allBalls,fow:G.fow,lastFiveOvers:G.lastFiveOvers,overRuns:G.overRuns})); }
+
+function checkInningsEnd(){
+  const sc=G.scores[G.innings];
+  if(sc.w>=10||(G.overs<999&&sc.balls>=G.overs*6)){
+    setTimeout(()=>endInnings(),200); return;
+  }
+  if(G.innings===1&&sc.r>G.scores[0].r){
+    setTimeout(()=>showResult(),200);
+  }
+}
+
+function endInnings(){
+  if(G.innings===0){
+    const sc0=G.scores[0];
+    const batting=G.teams[G.batting];
+    const bowling=G.teams[1-G.batting];
+    document.getElementById('ibSub').innerHTML=`<strong style="color:#c8ff40">${batting.name}</strong> scored ${sc0.r}/${sc0.w}<br>${bowling.name} needs <strong style="color:#c8ff40">${sc0.r+1}</strong> to win`;
+    document.getElementById('ibCard').innerHTML=`<div class="ib-score-row"><span class="ib-team">${batting.name}</span><span class="ib-score">${sc0.r}/${sc0.w}</span></div><div class="ib-score-row" style="opacity:.5"><span class="ib-team">${bowling.name}</span><span class="ib-score">Yet to bat</span></div><div class="ib-target">TARGET: ${sc0.r+1} runs in ${G.overs} overs</div>`;
+    showScreen('innBreak');
+  } else { showResult(); }
+}
+
+function startSecondInnings(){
+  G.innings=1;
+  G.batting=1-G.batting;
+  G.overBalls=[];
+  G.striker=0;
+  const bowl=1-G.batting;
+  document.getElementById('playersTitle').textContent=G.teams[G.batting].name.toUpperCase()+' BATTING';
+  document.getElementById('p1').value='';
+  document.getElementById('p2').value='';
+  document.getElementById('bowler1').value='';
+  document.getElementById('p1').placeholder='Opener 1';
+  document.getElementById('p2').placeholder='Opener 2';
+  document.getElementById('bowler1').placeholder='Bowler ('+G.teams[bowl].name+')';
+  showScreen('players');
+}
+
+function showResult(){
+  const inn0=G.scores[0], inn1=G.scores[1];
+  const t0=G.teams[G.batting===0?0:1];
+  const t1=G.teams[G.batting===0?1:0];
+  let winner,margin;
+  const inn0bat=G.innings===1?1-G.batting:G.batting;
+  const team0=G.teams[inn0bat], team1=G.teams[1-inn0bat];
+  if(inn1.r>inn0.r){ winner=team1.name; margin='by '+(10-inn1.w)+' wickets'; }
+  else if(inn0.r>inn1.r){ winner=team0.name; margin='by '+(inn0.r-inn1.r)+' runs'; }
+  else { winner='Match Tied'; margin=''; }
+  document.getElementById('resultWinner').textContent=winner+(winner!=='Match Tied'?' WINS!':'');
+  document.getElementById('resultMargin').textContent=margin;
+  const rsc=document.getElementById('resultScores');
+  rsc.innerHTML=`<div class="result-score-card"><div class="rsc-team" style="color:${team0.color}">${team0.name}</div><div class="rsc-score">${inn0.r}/${inn0.w}</div><div class="rsc-overs">${fmtOver(inn0.balls)} overs</div></div><div class="result-score-card"><div class="rsc-team" style="color:${team1.color}">${team1.name}</div><div class="rsc-score">${inn1.r}/${inn1.w}</div><div class="rsc-overs">${fmtOver(inn1.balls)} overs</div></div>`;
+  const allBatters=[...G.batters[0],...G.batters[1]];
+  const topBat=allBatters.reduce((a,b)=>b.r>a.r?b:a,{r:-1,name:'',fours:0,sixes:0});
+  const allBowlers=[...G.bowlers[0],...G.bowlers[1]];
+  const topBowl=allBowlers.reduce((a,b)=>b.w>a.w||(b.w===a.w&&b.r<a.r)?b:a,{w:-1,r:999,name:'',balls:0});
+  const mom=topBat.r>=20?topBat:topBowl.w>=2?topBowl:topBat;
+  const momStats=mom.fours!==undefined?`${mom.r} runs (${mom.b||0} balls) • ${mom.fours||0} fours • ${mom.sixes||0} sixes`:`${mom.w} wickets • ${mom.r||0} runs`;
+  document.getElementById('momCard').innerHTML=`<div class="mom-trophy">🏅</div><div class="mom-info"><div class="mom-label">Man of the Match</div><div class="mom-name">${mom.name||'—'}</div><div class="mom-stats">${momStats}</div></div>`;
+  document.getElementById('resultSc1').innerHTML=buildScorecardHTML(0);
+  document.getElementById('resultSc2').innerHTML=buildScorecardHTML(1);
+  endLiveMatch();
+  saveMatchHistory(winner,margin,inn0,inn1,team0,team1);
+  showScreen('result');
+}
+
+function newMatch(){ showScreen('home'); renderHistory(); }
+
+// ============================================================
+// UI UPDATE
+// ============================================================
+function updateUI(){
+  updateHeader();
+  updateOverBalls();
+  updateBatters();
+  updateBowler();
+  updateScorecard();
+  updateCommentary();
+}
+
+function updateHeader(){
+  const inn=G.innings, sc=G.scores[inn];
+  const bat=G.teams[G.batting], bowl=G.teams[1-G.batting];
+  document.getElementById('shBadge1').style.background=bat.color;
+  document.getElementById('shBadge1').textContent=initials(bat.name);
+  document.getElementById('shName1').textContent=bat.name;
+  document.getElementById('shBadge2').style.background=bowl.color;
+  document.getElementById('shBadge2').textContent=initials(bowl.name);
+  document.getElementById('shName2').textContent=bowl.name;
+  document.getElementById('shRuns').textContent=`${sc.r}/${sc.w}`;
+  document.getElementById('shOvers').textContent=`${fmtOver(sc.balls)} / ${G.overs} OV`;
+  const balls=sc.balls;
+  const crr=balls>0?(sc.r/(balls/6)).toFixed(2):'0.00';
+  document.getElementById('shCRR').textContent=crr;
+  if(inn===1){
+    const target=G.scores[0].r+1;
+    const need=target-sc.r;
+    const ballsLeft=G.overs*6-balls;
+    const rrr=ballsLeft>0?((need/(ballsLeft/6))).toFixed(2):'—';
+    document.getElementById('shRRR').textContent=rrr;
+    const tEl=document.getElementById('shTarget');
+    tEl.style.display='inline-block';
+    document.getElementById('shTargetText').textContent=`Need ${need} off ${ballsLeft} balls`;
+  } else {
+    document.getElementById('shRRR').textContent='—';
+    document.getElementById('shTarget').style.display='none';
+  }
+  const last5=G.lastFiveOvers[inn];
+  document.getElementById('shLast5').textContent=last5.length?last5.reduce((a,b)=>a+b,0):'—';
+  const projBalls=G.overs*6;
+  const proj=balls>0?Math.round((sc.r/balls)*projBalls):'—';
+  document.getElementById('shProj').textContent=proj;
+}
+
+function updateOverBalls(){
+  const row=document.getElementById('overBallsRow');
+  row.innerHTML='<span style="font-family:\'Rajdhani\',sans-serif;font-size:11px;color:#aaa;font-weight:700;letter-spacing:1px;flex-shrink:0">THIS OVER</span>';
+  const slots=6;
+  for(let i=0;i<slots;i++){
+    const d=document.createElement('div');
+    if(i<G.overBalls.length){
+      const b=G.overBalls[i];
+      d.className=`ball-chip ${b.type}`;
+      d.textContent=b.val;
+    } else {
+      d.className='ball-chip empty';
+      d.textContent='·';
+    }
+    row.appendChild(d);
+  }
+}
+
+function updateBatters(){
+  const inn=G.innings;
+  const bc=document.getElementById('battersCard');
+  let html='';
+  [0,1].forEach(si=>{
+    const idx=G.curBatters[si];
+    const b=G.batters[inn][idx];
+    if(!b)return;
+    const isStriker=si===G.striker;
+    html+=`<div class="batter-row">
+      <div class="batter-avatar" style="background:${G.teams[G.batting].color}">${initials(b.name)}</div>
+      <div class="batter-info">
+        <div class="batter-name">${b.name}${isStriker?'<span class="strike-badge">★ ON STRIKE</span>':''}</div>
+        <div class="batter-role">${isStriker?'Striker':'Non-Striker'} • ${b.fours} fours • ${b.sixes} sixes</div>
+      </div>
+      <div class="batter-stats">
+        <div class="batter-runs">${b.r}</div>
+        <div class="batter-balls">${b.b} balls</div>
+      </div>
+    </div>`;
+  });
+  bc.innerHTML=html;
+}
+
+function updateBowler(){
+  const bowl=1-G.batting;
+  const bwl=G.bowlers[bowl][G.curBowler];
+  if(!bwl)return;
+  const ovs=fmtOver(bwl.balls);
+  document.getElementById('bowlerCard').innerHTML=`
+    <div class="bowler-left">
+      <div class="bowler-avatar" style="background:${G.teams[bowl].color}">${initials(bwl.name)}</div>
+      <div><div class="bowler-name">${bwl.name}</div><div class="bowler-role">Bowler</div></div>
+    </div>
+    <div class="bowler-stats">${bwl.w}/${bwl.r} (${ovs})</div>`;
+}
+
+function updateScorecard(){
+  document.getElementById('scBatting').innerHTML=buildScorecardHTML(G.innings);
+  const bowl=1-G.batting;
+  let bHtml=`<div class="sc-section-title">BOWLING — ${G.teams[bowl].name.toUpperCase()}</div><table class="sc-table"><thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th><th>Econ</th></tr></thead><tbody>`;
+  G.bowlers[bowl].forEach(bwl=>{
+    const ovs=fmtOver(bwl.balls);
+    const econ=bwl.balls>0?((bwl.r/(bwl.balls/6))).toFixed(1):'—';
+    bHtml+=`<tr><td>${bwl.name}</td><td>${ovs}</td><td>${bwl.r}</td><td style="color:#dc2626;font-weight:700">${bwl.w}</td><td>${econ}</td></tr>`;
+  });
+  bHtml+=`</tbody></table>`;
+  document.getElementById('scBowling').innerHTML=bHtml;
+  const sc=G.scores[G.innings];
+  const ext=sc.extras;
+  const totalExt=ext.wd+ext.nb+ext.lb+ext.b;
+  let fowHtml=`<div class="sc-section-title">EXTRAS & FALL OF WICKETS</div>`;
+  fowHtml+=`<div style="font-size:13px;color:#555;margin-bottom:10px">Extras: <strong>${totalExt}</strong> (Wd ${ext.wd}, NB ${ext.nb}, LB ${ext.lb}, B ${ext.b})</div>`;
+  fowHtml+=`<div class="fow-list">`;
+  G.fow[G.innings].forEach(f=>{
+    fowHtml+=`<div class="fow-item"><span class="fow-wicket">${f.w}-${f.r}</span><span class="fow-detail">${f.name} (${f.how}) — ${f.over}</span></div>`;
+  });
+  fowHtml+=`</div>`;
+  document.getElementById('scFOW').innerHTML=fowHtml;
+}
+
+function buildScorecardHTML(inn){
+  const battingT=inn===0?G.batting:(1-G.batting);
+  const sc=G.scores[inn];
+  let html=`<div class="sc-section-title">BATTING — ${(G.teams[battingT]?.name||'Team').toUpperCase()}</div>`;
+  html+=`<table class="sc-table"><thead><tr><th>Batter</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead><tbody>`;
+  G.batters[inn].forEach((b,i)=>{
+    const sr=b.b>0?((b.r/b.b)*100).toFixed(0):'—';
+    const howOut=b.out?`<div class="out-text">${b.how}</div>`:'<div class="out-text" style="color:#16a34a">not out</div>';
+    html+=`<tr><td><div style="font-weight:600">${b.name}</div>${howOut}</td><td style="font-weight:700;color:#222">${b.r}</td><td>${b.b}</td><td style="color:#1d4ed8">${b.fours}</td><td style="color:#a16207">${b.sixes}</td><td>${sr}</td></tr>`;
+  });
+  html+=`</tbody></table>`;
+  if(sc.balls>0){
+    const ext=sc.extras;
+    html+=`<div class="sc-total"><span class="sc-total-label">TOTAL</span><span class="sc-total-val">${sc.r}/${sc.w} (${fmtOver(sc.balls)} ov)</span></div>`;
+  }
+  return html;
+}
+
+function updateCommentary(){
+  const inn=G.innings;
+  const el=document.getElementById('tabCommentary');
+  const balls=G.allBalls[inn];
+  if(!balls.length){el.innerHTML='<p style="text-align:center;color:#bbb;padding:24px;font-size:14px">Ball-by-ball commentary will appear here</p>';return;}
+  let html='';
+  for(let i=balls.length-1;i>=0;i--){
+    const b=balls[i];
+    const overNum=Math.floor((G.scores[inn].balls-balls.length+i)/6);
+    const ballNum=(G.scores[inn].balls-balls.length+i+1)%6||6;
+    const overStr=`${overNum}.${ballNum}`;
+    let chipClass='run0',chipTxt='0',desc='';
+    if(b.type==='run'){
+      chipTxt=b.val;
+      chipClass=b.val===4?'run4':b.val===6?'run6':b.val===0?'run0':'run'+Math.min(b.val,3);
+      const bname=G.batters[inn][b.striker]?.name||'Batter';
+      const blname=G.bowlers[1-G.batting][b.bowler]?.name||'Bowler';
+      desc=b.val===6?`<strong>${bname}</strong> hits ${blname} for a <strong style="color:#a16207">SIX!</strong> 🎯`:
+           b.val===4?`<strong>${bname}</strong> drives ${blname} for a <strong style="color:#1d4ed8">FOUR!</strong> ⛳`:
+           b.val===0?`${blname} bowls. Dot ball. Good delivery.`:
+           `<strong>${bname}</strong> runs ${b.val}`;
+    } else if(b.type==='wicket'){
+      chipTxt='W'; chipClass='wicket';
+      const bname=G.batters[inn][b.striker]?.name||'Batter';
+      const blname=G.bowlers[1-G.batting][b.bowler]?.name||'Bowler';
+      desc=`<strong style="color:#dc2626">WICKET!</strong> ${bname} is ${b.how} by ${blname}!`;
+    } else {
+      chipTxt=b.subtype==='wd'?'Wd':b.subtype==='nb'?'NB':b.subtype==='lb'?'LB':'B';
+      chipClass='extra';
+      desc=`Extra — ${b.subtype==='wd'?'Wide':b.subtype==='nb'?'No Ball':b.subtype==='lb'?'Leg Bye':'Bye'} (${b.val})`;
+    }
+    html+=`<div class="comm-item"><div class="ball-chip comm-ball-chip ${chipClass}">${chipTxt}</div><div class="comm-text"><div class="comm-over">Over ${overStr}</div><div class="comm-desc">${desc}</div></div></div>`;
+  }
+  el.innerHTML=html;
+}
+
+function addCommentary(){} // handled inline in updateCommentary
+function addCommentaryExtra(){}
+function addCommentaryWicket(){}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab){
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  const tabMap={score:'tabScore',scorecard:'tabScorecard',commentary:'tabCommentary'};
+  document.querySelectorAll('.tab-item')[['score','scorecard','commentary'].indexOf(tab)].classList.add('active');
+  document.getElementById(tabMap[tab]).classList.add('active');
+}
+
+// ============================================================
+// TOSS
+// ============================================================
+function selectTossWinner(idx){
+  G.toss.winner=idx;
+  document.querySelectorAll('.toss-team-btn').forEach((b,i)=>{
+    b.classList.toggle('selected',i===idx);
+    b.style.borderColor=i===idx?G.teams[i].color:'#e0e0e0';
+    b.style.background=i===idx?G.teams[i].color+'15':'#fff';
+  });
+}
+
+function selectElect(v){
+  G.toss.elected=v;
+  document.getElementById('electBat').classList.toggle('selected',v==='bat');
+  document.getElementById('electBowl').classList.toggle('selected',v==='bowl');
+}
+
+// ============================================================
+// FORMAT
+// ============================================================
+function selectFormat(el,overs,fmt){
+  document.querySelectorAll('.over-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  G.overs=overs; G.format=fmt;
+  document.getElementById('customOvers').value='';
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id){
+  const m=document.getElementById(id);
+  m.style.display='flex';
+  requestAnimationFrame(()=>m.classList.add('show'));
+}
+function closeModal(id){
+  const m=document.getElementById(id);
+  m.classList.remove('show');
+  setTimeout(()=>m.style.display='none',300);
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function endLiveMatch();
+  saveMatchHistory(winner,margin,inn0,inn1,team0,team1){
+  const entry={id:Date.now(),winner,margin,team0:team0.name,team1:team1.name,score0:`${inn0.r}/${inn0.w}`,score1:`${inn1.r}/${inn1.w}`,color0:team0.color,color1:team1.color,date:new Date().toLocaleDateString()};
+  matchHistory.unshift(entry);
+  if(matchHistory.length>10)matchHistory=matchHistory.slice(0,10);
+  localStorage.setItem('cpk_history',JSON.stringify(matchHistory));
+}
+
+function renderHistory(){
+  const el=document.getElementById('historyList');
+  if(!matchHistory.length){el.innerHTML='<div class="no-matches"><p>No matches yet</p><p style="margin-top:4px;font-size:12px">Start your first match!</p></div>';return;}
+  el.innerHTML=matchHistory.map(m=>`
+    <div class="history-card">
+      <div class="hc-badge" style="background:${m.color0||'#007A3D'}">${initials(m.team0)}</div>
+      <div class="hc-info">
+        <div class="hc-teams">${m.team0} vs ${m.team1}</div>
+        <div class="hc-result">${m.winner} won ${m.margin} • ${m.date}</div>
+      </div>
+      <div class="hc-score">
+        <p>${m.score0}</p>
+        <p style="font-size:12px;color:#aaa">${m.score1}</p>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function initials(name){
+  if(!name)return'?';
+  return name.split(' ').map(w=>w[0]?.toUpperCase()||'').slice(0,2).join('');
+}
+
+function fmtOver(balls){
+  if(!balls&&balls!==0)return'0.0';
+  return `${Math.floor(balls/6)}.${balls%6}`;
+}
+</script>
+<!-- LIVE MATCHES SCREEN -->
+<div class="screen" id="liveMatches">
+  <div class="app-header">
+    <button class="back-btn" onclick="showScreen('home')">←</button>
+    <h1>LIVE MATCHES</h1>
+    <div style="width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite"></div>
+  </div>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:10px" id="liveMatchesList">
+    <div style="text-align:center;padding:40px 20px">
+      <div class="loader" style="margin:0 auto 16px;border-color:rgba(1,77,30,.2);border-top-color:#014d1e"></div>
+      <p style="color:#aaa;font-size:14px">Loading live matches...</p>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE VIEWER SCREEN -->
+<div class="screen" id="liveViewer">
+  <div class="app-header">
+    <button class="back-btn" onclick="stopViewing()">←</button>
+    <h1>LIVE SCORE</h1>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite"></div>
+      <span style="font-family:'Rajdhani',sans-serif;font-size:12px;color:rgba(255,255,255,.7);letter-spacing:1px">LIVE</span>
+    </div>
+  </div>
+  <div id="liveViewerContent">
+    <div style="background:linear-gradient(135deg,#014d1e,#027
