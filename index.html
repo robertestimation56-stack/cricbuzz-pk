@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Cricbuzz PK</title>
-<style>*{font-family:Arial,sans-serif}</style>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh;overflow-x:hidden}
@@ -650,8 +650,6 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh;overflow-x
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 // ============================================================
 // FIREBASE CONFIG
@@ -704,8 +702,14 @@ let matchHistory = JSON.parse(localStorage.getItem('cpk_history')||'[]');
 // INIT
 // ============================================================
 window.onload = () => {
-  setTimeout(()=>{ showScreen('home'); renderHistory(); }, 2800);
   buildColorPickers();
+  renderHistory();
+  setTimeout(()=>{
+    document.getElementById('splash').classList.remove('active');
+    document.getElementById('home').classList.add('active');
+  }, 2000);
+  // Load Firebase after app starts
+  setTimeout(initFirebase, 3000);
 };
 
 function buildColorPickers(){
